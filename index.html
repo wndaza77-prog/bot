@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Kinex Stars</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --gold: #FFD700;
+    --gold2: #FFA500;
+    --dark: #0a0a1a;
+    --card: #12122a;
+    --card2: #1a1a35;
+    --accent: #7c3aed;
+    --accent2: #a855f7;
+    --text: #f0f0ff;
+    --sub: #9090b0;
+    --green: #22c55e;
+    --red: #ef4444;
+    --blue: #3b82f6;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+  body {
+    background: var(--dark);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── SPLASH SCREEN ── */
+  #splash {
+    position: fixed; inset: 0; z-index: 999;
+    background: radial-gradient(ellipse at 50% 30%, #1a0a3a 0%, #0a0a1a 70%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 20px;
+  }
+  .splash-logo {
+    width: 100px; height: 100px;
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    border-radius: 28px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 52px;
+    box-shadow: 0 0 60px rgba(255,215,0,0.5);
+    animation: pulse-logo 1.5s ease-in-out infinite alternate;
+  }
+  @keyframes pulse-logo { from { box-shadow: 0 0 30px rgba(255,215,0,0.4); } to { box-shadow: 0 0 80px rgba(255,215,0,0.8); } }
+  .splash-title { font-size: 34px; font-weight: 800; background: linear-gradient(135deg, var(--gold), var(--gold2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .splash-sub { color: var(--sub); font-size: 14px; }
+  .splash-bar { width: 200px; height: 4px; background: #222; border-radius: 4px; overflow: hidden; margin-top: 10px; }
+  .splash-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold2)); border-radius: 4px; animation: fill-bar 2s ease forwards; }
+  @keyframes fill-bar { from { width:0%; } to { width:100%; } }
+
+  /* ── WELCOME ── */
+  #welcome {
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 30px 20px; text-align: center; gap: 18px;
+  }
+  .welcome-stars { font-size: 60px; animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  .welcome-title { font-size: 28px; font-weight: 800; background: linear-gradient(135deg, var(--gold), var(--gold2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .welcome-user { font-size: 20px; font-weight: 700; color: var(--text); }
+  .welcome-text { color: var(--sub); font-size: 14px; line-height: 1.6; max-width: 300px; }
+  .welcome-btn {
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    color: #000; font-weight: 800; font-size: 16px;
+    border: none; border-radius: 16px; padding: 16px 40px; cursor: pointer;
+    box-shadow: 0 4px 30px rgba(255,215,0,0.4);
+    transition: transform .15s, box-shadow .15s;
+  }
+  .welcome-btn:active { transform: scale(0.97); }
+
+  /* ── MAIN APP ── */
+  #app { display: none; flex-direction: column; min-height: 100vh; }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, #0f0f25, #1a0a35);
+    padding: 16px 20px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid rgba(255,215,0,0.1);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-logo { display: flex; align-items: center; gap: 10px; }
+  .header-icon { font-size: 28px; }
+  .header-name { font-size: 20px; font-weight: 800; background: linear-gradient(135deg,var(--gold),var(--gold2)); -webkit-background-clip:text;-webkit-text-fill-color:transparent; }
+  .header-balance {
+    background: rgba(255,215,0,0.12); border: 1px solid rgba(255,215,0,0.3);
+    border-radius: 20px; padding: 6px 14px;
+    font-size: 15px; font-weight: 700; color: var(--gold);
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  /* Nav */
+  .nav {
+    display: flex; background: #0f0f20;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  }
+  .nav-btn {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 10px 4px; border: none; background: none; color: var(--sub);
+    font-size: 10px; cursor: pointer; transition: color .2s;
+  }
+  .nav-btn.active { color: var(--gold); }
+  .nav-btn .icon { font-size: 22px; }
+
+  /* Pages */
+  .page { display: none; padding: 20px 16px 90px; }
+  .page.active { display: block; }
+
+  /* Section heading */
+  .sec-title {
+    font-size: 18px; font-weight: 700; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* ── HOME PAGE ── */
+  .hero-card {
+    background: linear-gradient(135deg, #1a0a35, #0f0f25);
+    border: 1px solid rgba(255,215,0,0.2);
+    border-radius: 20px; padding: 24px 20px; text-align: center; margin-bottom: 20px;
+  }
+  .hero-star { font-size: 56px; margin-bottom: 8px; }
+  .hero-title { font-size: 22px; font-weight: 800; color: var(--gold); }
+  .hero-sub { color: var(--sub); font-size: 13px; margin-top: 4px; }
+
+  .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  .stat-card {
+    background: var(--card); border-radius: 16px; padding: 16px;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .stat-label { font-size: 11px; color: var(--sub); margin-bottom: 4px; }
+  .stat-val { font-size: 20px; font-weight: 800; color: var(--gold); }
+
+  .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  .qa-btn {
+    background: var(--card); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px; padding: 18px 14px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    cursor: pointer; transition: background .2s, transform .1s;
+    font-size: 13px; font-weight: 600; color: var(--text);
+  }
+  .qa-btn .qa-icon { font-size: 28px; }
+  .qa-btn:active { transform: scale(0.97); background: var(--card2); }
+
+  /* ── STARS PAGE ── */
+  .stars-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  .star-pack {
+    background: var(--card); border-radius: 18px; padding: 18px 14px;
+    border: 1px solid rgba(255,215,0,0.15); text-align: center; cursor: pointer;
+    transition: transform .15s, border-color .2s;
+    position: relative; overflow: hidden;
+  }
+  .star-pack:active { transform: scale(0.97); }
+  .star-pack.popular { border-color: var(--gold); }
+  .star-pack .badge {
+    position: absolute; top: 8px; right: -18px;
+    background: var(--gold); color: #000; font-size: 9px; font-weight: 800;
+    padding: 3px 24px; transform: rotate(35deg);
+  }
+  .star-pack .pack-icon { font-size: 36px; margin-bottom: 6px; }
+  .star-pack .pack-count { font-size: 20px; font-weight: 800; color: var(--gold); }
+  .star-pack .pack-label { font-size: 11px; color: var(--sub); margin: 2px 0 8px; }
+  .star-pack .pack-price {
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    color: #000; font-weight: 800; font-size: 13px;
+    border-radius: 10px; padding: 6px 14px; display: inline-block;
+  }
+
+  /* ── GIFT PAGE ── */
+  .gift-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .gift-tab {
+    flex: 1; padding: 10px; border-radius: 12px; border: none; cursor: pointer;
+    font-size: 13px; font-weight: 600;
+    background: var(--card); color: var(--sub); transition: all .2s;
+  }
+  .gift-tab.active { background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #000; }
+
+  .gift-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .gift-card {
+    background: var(--card); border-radius: 18px; padding: 18px 14px;
+    border: 1px solid rgba(255,255,255,0.06); text-align: center; cursor: pointer;
+    transition: transform .15s;
+  }
+  .gift-card:active { transform: scale(0.97); }
+  .gift-icon { font-size: 40px; margin-bottom: 8px; }
+  .gift-name { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .gift-desc { font-size: 11px; color: var(--sub); margin-bottom: 10px; }
+  .gift-price {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff; font-size: 12px; font-weight: 700;
+    border-radius: 10px; padding: 6px 12px; display: inline-block;
+  }
+
+  /* Premium */
+  .premium-hero {
+    background: linear-gradient(135deg, #1e0050, #3b0080);
+    border: 1px solid rgba(168,85,247,0.4);
+    border-radius: 20px; padding: 28px 20px; text-align: center; margin-bottom: 20px;
+  }
+  .premium-icon { font-size: 52px; margin-bottom: 10px; }
+  .premium-title { font-size: 22px; font-weight: 800; color: var(--accent2); }
+  .premium-sub { color: #c084fc; font-size: 13px; margin: 6px 0 16px; }
+  .prem-features { list-style: none; text-align: left; margin-bottom: 16px; }
+  .prem-features li { padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; color: #d0d0ff; display: flex; align-items: center; gap: 8px; }
+  .prem-features li:last-child { border: none; }
+
+  .prem-plans { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .prem-plan {
+    background: var(--card); border-radius: 14px; padding: 14px 10px; text-align: center;
+    border: 1px solid rgba(168,85,247,0.2); cursor: pointer; transition: transform .15s;
+  }
+  .prem-plan.best { border-color: var(--accent2); background: #1e0050; }
+  .prem-plan:active { transform: scale(0.97); }
+  .plan-dur { font-size: 11px; color: var(--sub); margin-bottom: 4px; }
+  .plan-price { font-size: 16px; font-weight: 800; color: var(--accent2); }
+  .plan-mo { font-size: 9px; color: var(--sub); }
+  .plan-badge { font-size: 9px; background: var(--accent2); color: #fff; border-radius: 6px; padding: 2px 6px; margin-top: 4px; display: inline-block; }
+
+  /* ── TOP RATING ── */
+  .top-header {
+    background: linear-gradient(135deg, #0a1a0a, #0a200a);
+    border: 1px solid rgba(34,197,94,0.2);
+    border-radius: 20px; padding: 20px; text-align: center; margin-bottom: 20px;
+  }
+  .top-crown { font-size: 48px; margin-bottom: 6px; }
+  .top-title { font-size: 18px; font-weight: 800; color: var(--green); }
+  .top-sub { font-size: 12px; color: var(--sub); margin-top: 4px; }
+
+  .podium { display: flex; align-items: flex-end; justify-content: center; gap: 8px; margin-bottom: 24px; height: 120px; }
+  .podium-place {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    flex: 1; max-width: 110px;
+  }
+  .podium-avatar { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; border: 2px solid transparent; }
+  .podium-name { font-size: 11px; font-weight: 600; text-align: center; }
+  .podium-stars { font-size: 11px; color: var(--gold); }
+  .podium-block { width: 100%; border-radius: 12px 12px 0 0; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; }
+  .p1 .podium-avatar { border-color: var(--gold); }
+  .p1 .podium-block { height: 80px; background: linear-gradient(180deg, #FFD700, #FFA500); color: #000; }
+  .p2 .podium-avatar { border-color: #C0C0C0; }
+  .p2 .podium-block { height: 55px; background: linear-gradient(180deg, #C0C0C0, #909090); color: #000; }
+  .p3 .podium-avatar { border-color: #CD7F32; }
+  .p3 .podium-block { height: 40px; background: linear-gradient(180deg, #CD7F32, #8B5020); color: #fff; }
+
+  .rating-list { display: flex; flex-direction: column; gap: 10px; }
+  .rating-item {
+    background: var(--card); border-radius: 14px; padding: 14px 16px;
+    display: flex; align-items: center; gap: 14px;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .rating-item.me { border-color: rgba(255,215,0,0.3); background: rgba(255,215,0,0.07); }
+  .rank-num { width: 28px; font-size: 14px; font-weight: 800; color: var(--sub); text-align: center; }
+  .rank-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .rank-info { flex: 1; }
+  .rank-name { font-size: 14px; font-weight: 600; }
+  .rank-tag { font-size: 11px; color: var(--sub); }
+  .rank-stars { font-size: 14px; font-weight: 700; color: var(--gold); display: flex; align-items: center; gap: 4px; }
+
+  /* Language Selector Styles */
+  .lang-box {
+    margin-top: 16px; background: rgba(255,255,255,0.03); border-radius: 14px; padding: 12px;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .lang-title { font-size: 12px; color: var(--sub); margin-bottom: 8px; font-weight: 600; }
+  .lang-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .lang-btn {
+    background: var(--card2); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
+    color: var(--text); padding: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+  }
+  .lang-btn.active { border-color: var(--gold); background: rgba(255,215,0,0.1); color: var(--gold); }
+
+  /* Input fields in modal */
+  .modal-input {
+    width: 100%; padding: 12px; background: #0f0f20; border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px; color: #fff; font-size: 14px; margin-bottom: 16px; outline: none;
+  }
+  .modal-input:focus { border-color: var(--gold); }
+
+  /* ── ADMIN PANEL ── */
+  #admin-overlay {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  #admin-overlay.show { display: flex; }
+  .admin-login {
+    background: var(--card); border-radius: 24px; padding: 32px 24px;
+    width: 100%; max-width: 340px;
+    border: 1px solid rgba(255,215,0,0.2);
+  }
+  .admin-icon { font-size: 48px; text-align: center; margin-bottom: 12px; }
+  .admin-title { text-align: center; font-size: 20px; font-weight: 800; color: var(--gold); margin-bottom: 6px; }
+  .admin-sub { text-align: center; font-size: 13px; color: var(--sub); margin-bottom: 24px; }
+  .code-dots { display: flex; justify-content: center; gap: 12px; margin-bottom: 24px; }
+  .code-dot { width: 18px; height: 18px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,215,0,0.3); transition: background .2s; }
+  .code-dot.filled { background: var(--gold); border-color: var(--gold); }
+  .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .num-btn {
+    background: var(--card2); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px; padding: 18px; font-size: 22px; font-weight: 700;
+    color: var(--text); cursor: pointer; text-align: center; transition: background .15s, transform .1s;
+    border: none;
+  }
+  .num-btn:active { background: rgba(255,215,0,0.15); transform: scale(0.95); }
+  .num-btn.del { font-size: 18px; }
+  .num-btn.empty { background: none; border: none; cursor: default; }
+  .admin-error { text-align: center; color: var(--red); font-size: 13px; margin-top: 12px; display: none; }
+
+  /* Admin Dashboard */
+  #admin-panel {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: var(--dark); overflow-y: auto;
+    flex-direction: column;
+  }
+  #admin-panel.show { display: flex; }
+  .admin-dash-header {
+    background: linear-gradient(135deg, #1a0a00, #2a1000);
+    padding: 20px 16px 16px;
+    border-bottom: 1px solid rgba(255,165,0,0.2);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .admin-dash-title { font-size: 18px; font-weight: 800; color: var(--gold2); display: flex; align-items: center; gap: 8px; }
+  .admin-close { background: rgba(255,255,255,0.08); border: none; color: var(--text); padding: 8px 14px; border-radius: 10px; cursor: pointer; font-size: 13px; }
+
+  .admin-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px; }
+  .adm-stat { background: var(--card); border-radius: 16px; padding: 16px; border: 1px solid rgba(255,165,0,0.15); }
+  .adm-stat-label { font-size: 11px; color: var(--sub); margin-bottom: 4px; }
+  .adm-stat-val { font-size: 22px; font-weight: 800; }
+  .adm-stat-val.gold { color: var(--gold); }
+  .adm-stat-val.green { color: var(--green); }
+  .adm-stat-val.purple { color: var(--accent2); }
+  .adm-stat-val.blue { color: var(--blue); }
+
+  .admin-section { padding: 0 16px 16px; }
+  .admin-sec-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; color: var(--gold2); }
+  .admin-table { background: var(--card); border-radius: 16px; overflow: hidden; }
+  .adm-row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .adm-row:last-child { border: none; }
+  .adm-ava { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .adm-info { flex: 1; }
+  .adm-name { font-size: 13px; font-weight: 600; }
+  .adm-meta { font-size: 11px; color: var(--sub); }
+  .adm-amount { font-size: 14px; font-weight: 700; color: var(--gold); }
+  .adm-status { font-size: 10px; padding: 3px 8px; border-radius: 8px; font-weight: 600; }
+  .adm-status.ok { background: rgba(34,197,94,0.2); color: var(--green); }
+  .adm-status.pend { background: rgba(255,165,0,0.2); color: var(--gold2); }
+
+  /* Admin Management Form */
+  .admin-form-group { margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px;}
+  .admin-form-group label { font-size: 12px; color: var(--sub); }
+  .admin-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .admin-input { background: #0f0f20; border: 1px solid rgba(255,165,0,0.3); padding: 10px; border-radius: 8px; color: #fff; font-size: 13px; }
+  .admin-save-btn { background: var(--gold); color: #000; font-weight: 700; padding: 12px; border: none; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 10px; }
+
+  .admin-action-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px 24px; }
+  .adm-action {
+    background: var(--card); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px; padding: 16px; cursor: pointer; text-align: center;
+    font-size: 12px; font-weight: 600; color: var(--text); transition: background .2s;
+  }
+  .adm-action .icon { font-size: 24px; margin-bottom: 6px; }
+  .adm-action:active { background: var(--card2); }
+
+  /* Toast */
+  #toast {
+    position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+    background: #222; color: #fff; padding: 12px 24px; border-radius: 14px;
+    font-size: 14px; font-weight: 600; z-index: 999; opacity: 0;
+    transition: opacity .3s; pointer-events: none; white-space: nowrap;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  #toast.show { opacity: 1; }
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 300;
+    background: rgba(0,0,0,0.8); backdrop-filter: blur(6px);
+    align-items: flex-end; justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--card); border-radius: 24px 24px 0 0;
+    padding: 24px 20px 40px; width: 100%; max-width: 480px;
+  }
+  .modal-handle { width: 40px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; margin: 0 auto 20px; }
+  .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+  .modal-desc { font-size: 13px; color: var(--sub); margin-bottom: 16px; white-space: pre-line; }
+  .modal-confirm {
+    width: 100%; padding: 16px; border: none; border-radius: 16px;
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    color: #000; font-size: 16px; font-weight: 800; cursor: pointer;
+  }
+  .modal-cancel { width: 100%; padding: 14px; border: none; border-radius: 16px; background: none; color: var(--sub); font-size: 15px; cursor: pointer; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<div id="splash">
+  <div class="splash-logo">⭐</div>
+  <div class="splash-title">KINEX STARS</div>
+  <div class="splash-sub">Yuklanmoqda...</div>
+  <div class="splash-bar"><div class="splash-fill"></div></div>
+</div>
+
+<div id="welcome">
+  <div class="welcome-stars">🌟⭐✨</div>
+  <div class="welcome-title">KINEX STARS ga<br>Xush Kelibsiz!</div>
+  <div class="welcome-user" id="welcome-name">Salom, Do'st! 👋</div>
+  <div class="welcome-text">Bu yerda siz Telegram Stars sotib olishingiz, Premium sovgalar yuborishingiz va do'stlaringiz bilan raqobatlashishingiz mumkin!</div>
+  <button class="welcome-btn" onclick="enterApp()">🚀 Boshlash</button>
+</div>
+
+<div id="app">
+  <div class="header">
+    <div class="header-logo">
+      <div class="header-icon">⭐</div>
+      <div class="header-name">KINEX STARS</div>
+    </div>
+    <div class="header-balance" id="balance-display">⭐ 250</div>
+  </div>
+
+  <div id="page-home" class="page active">
+    <div class="hero-card">
+      <div class="hero-star">🌟</div>
+      <div class="hero-title">Kinex Stars Platformasi</div>
+      <div class="hero-sub">Eng tez va ishonchli yulduzlar do'koni</div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Sizning Starslar</div>
+        <div class="stat-val" id="stat-stars">250 ⭐</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Reyting O'rni</div>
+        <div class="stat-val" style="color:#22c55e">#7 🏆</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Sotib Olingan</div>
+        <div class="stat-val" style="color:#a855f7">3 🎁</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Yuborilgan</div>
+        <div class="stat-val" style="color:#3b82f6">12 📤</div>
+      </div>
+    </div>
+
+    <div class="sec-title">⚡ Tezkor Harakatlar</div>
+    <div class="quick-actions">
+      <div class="qa-btn" onclick="goPage('stars')">
+        <div class="qa-icon">⭐</div>Stars Sotib Ol
+      </div>
+      <div class="qa-btn" onclick="goPage('gift')">
+        <div class="qa-icon">🎁</div>Gift Yuborish
+      </div>
+      <div class="qa-btn" onclick="goPage('gift'); switchGiftTab('premium')">
+        <div class="qa-icon">💎</div>Premium Olish
+      </div>
+      <div class="qa-btn" onclick="goPage('top')">
+        <div class="qa-icon">🏆</div>Top Reyting
+      </div>
+    </div>
+
+    <div class="autopay-badge">
+      <div class="autopay-icon">💳</div>
+      <div class="autopay-info">
+        <div class="autopay-title">Avto To'lov Yoqilgan</div>
+        <div class="autopay-sub">Telegramdan to'lovlar avtomatik qabul qilinadi</div>
+      </div>
+      <div class="autopay-toggle" onclick="showToast('Avto to\'lov sozlamasi o\'zgartirildi')"></div>
+    </div>
+  </div>
+
+  <div id="page-stars" class="page">
+    <div class="sec-title">⭐ Stars Sotib Olish</div>
+
+    <div class="stars-grid">
+      <div class="star-pack" onclick="buyStars(50, prices.stars50)">
+        <div class="pack-icon">⭐</div>
+        <div class="pack-count">50</div>
+        <div class="pack-label">Stars</div>
+        <div class="pack-price" id="p-stars50">$0.50</div>
+      </div>
+      <div class="star-pack popular" onclick="buyStars(100, prices.stars100)">
+        <div class="badge">MASHHUR</div>
+        <div class="pack-icon">🌟</div>
+        <div class="pack-count">100</div>
+        <div class="pack-label">Stars</div>
+        <div class="pack-price" id="p-stars100">$0.99</div>
+      </div>
+      <div class="star-pack" onclick="buyStars(250, prices.stars250)">
+        <div class="pack-icon">✨</div>
+        <div class="pack-count">250</div>
+        <div class="pack-label">Stars</div>
+        <div class="pack-price" id="p-stars250">$2.49</div>
+      </div>
+      <div class="star-pack popular" onclick="buyStars(500, prices.stars500)">
+        <div class="badge">FOYDALI</div>
+        <div class="pack-icon">💫</div>
+        <div class="pack-count">500</div>
+        <div class="pack-label">Stars</div>
+        <div class="pack-price" id="p-stars500">$4.99</div>
+      </div>
+      <div class="star-pack" onclick="buyStars(1000, prices.stars1000)">
+        <div class="pack-icon">🌠</div>
+        <div class="pack-count">1000</div>
+        <div class="pack-label">Stars</div>
+        <div class="pack-price" id="p-stars1000">$9.99</div>
+      </div>
+      <div class="star-pack popular" onclick="buyStars(2500, prices.stars2500)">
+        <div class="badge">MAXSUS</div>
+        <div class="pack-icon">🏆</div>
+        <div class="pack-count">2500</div>
+        <div class="pack-label">Stars</div>
+        <div class="pack-price" id="p-stars2500">$22.99</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="page-gift" class="page">
+    <div class="gift-tabs">
+      <button class="gift-tab active" id="tab-gift" onclick="switchGiftTab('gift')">🎁 Sovgalar</button>
+      <button class="gift-tab" id="tab-premium" onclick="switchGiftTab('premium')">💎 Premium</button>
+    </div>
+
+    <div id="gift-section">
+      <div class="sec-title">🎁 Gift Yuborish</div>
+      <div class="gift-grid">
+        <div class="gift-card" onclick="openGift('Yulduz Sovga','Do\'stingizga Stars yuboring', 'stars50_gift')">
+          <div class="gift-icon">⭐</div>
+          <div class="gift-name">Yulduz Sovga</div>
+          <div class="gift-desc">50 Stars yuborish</div>
+          <div class="gift-price" id="p-gift50">⭐ 50</div>
+        </div>
+        <div class="gift-card" onclick="openGift('Premium Sovga','Dostingizga 1 oy Premium sovga bering', 'prem1')">
+          <div class="gift-icon">💎</div>
+          <div class="gift-name">Premium Sovga</div>
+          <div class="gift-desc">1 oy Premium</div>
+          <div class="gift-price" id="p-giftPrem1">$5.99</div>
+        </div>
+        <div class="gift-card" onclick="openGift('Katta Yulduz','Do\'stingizga Stars yuboring', 'stars100_gift')">
+          <div class="gift-icon">🌟</div>
+          <div class="gift-name">Katta Yulduz</div>
+          <div class="gift-desc">100 Stars yuborish</div>
+          <div class="gift-price" id="p-gift100">⭐ 100</div>
+        </div>
+        <div class="gift-card" onclick="openGift('Premium+ Sovga','3 oy Premium - eng yaxshi tanlov', 'prem3')">
+          <div class="gift-icon">👑</div>
+          <div class="gift-name">Premium+ Sovga</div>
+          <div class="gift-desc">3 oy Premium</div>
+          <div class="gift-price" id="p-giftPrem3">$15.99</div>
+        </div>
+        <div class="gift-card" onclick="openGift('Super Paket','500 Stars + 1 oy Premium birga', 'super_pack')">
+          <div class="gift-icon">🎀</div>
+          <div class="gift-name">Super Paket</div>
+          <div class="gift-desc">Stars + Premium</div>
+          <div class="gift-price" id="p-giftSuper">$9.99</div>
+        </div>
+        <div class="gift-card" onclick="openGift('VIP Sovga','1000 Stars + 3 oy Premium - VIP paket', 'vip_pack')">
+          <div class="gift-icon">🏆</div>
+          <div class="gift-name">VIP Sovga</div>
+          <div class="gift-desc">Stars + 3 oy Premium</div>
+          <div class="gift-price" id="p-giftVip">$24.99</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="premium-section" style="display:none">
+      <div class="premium-hero">
+        <div class="premium-icon">💎</div>
+        <div class="premium-title">Telegram Premium</div>
+        <div class="premium-sub">Barcha imkoniyatlarni oching</div>
+        <ul class="prem-features">
+          <li>✅ Katta fayl yuklash (4 GB)</li>
+          <li>✅ Cheksiz kanallar</li>
+          <li>✅ Maxsus stikerlar va emoji</li>
+          <li>✅ Tez qidiruv</li>
+          <li>✅ Reklamsiz foydalanish</li>
+          <li>✅ Maxsus Premium badge</li>
+          <li>✅ 4 ta aktiv hisob</li>
+        </ul>
+      </div>
+      <div class="sec-title">📅 Reja Tanlang</div>
+      <div class="prem-plans">
+        <div class="prem-plan" onclick="openGift('Premium 1 oy','Telegram Premium 1 oylik obuna', 'prem1')">
+          <div class="plan-dur">1 Oy</div>
+          <div class="plan-price" id="p-prem1">$5.99</div>
+          <div class="plan-mo">/oy</div>
+        </div>
+        <div class="prem-plan best" onclick="openGift('Premium 6 oy','Telegram Premium 6 oylik obuna - eng yaxshi narx', 'prem6')">
+          <div class="plan-dur">6 Oy</div>
+          <div class="plan-price" id="p-prem6">$29.99</div>
+          <div class="plan-mo">$5/oy</div>
+          <div class="plan-badge">YAXSHI</div>
+        </div>
+        <div class="prem-plan" onclick="openGift('Premium 1 yil','Telegram Premium 12 oylik obuna', 'prem12')">
+          <div class="plan-dur">1 Yil</div>
+          <div class="plan-price" id="p-prem12">$54.99</div>
+          <div class="plan-mo">$4.6/oy</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="page-top" class="page">
+    <div class="top-header">
+      <div class="top-crown">🏆</div>
+      <div class="top-title">Top Reyting</div>
+      <div class="top-sub">Eng ko'p Stars to'plagan foydalanuvchilar</div>
+    </div>
+
+    <div class="podium">
+      <div class="podium-place p2">
+        <div class="podium-avatar" style="background:#333">🐺</div>
+        <div class="podium-name">Alex K.</div>
+        <div class="podium-stars">⭐ 4,250</div>
+        <div class="podium-block">2</div>
+      </div>
+      <div class="podium-place p1">
+        <div class="podium-avatar" style="background:#333">🦁</div>
+        <div class="podium-name">Sardor T.</div>
+        <div class="podium-stars">⭐ 8,900</div>
+        <div class="podium-block">1</div>
+      </div>
+      <div class="podium-place p3">
+        <div class="podium-avatar" style="background:#333">🐯</div>
+        <div class="podium-name">Malika U.</div>
+        <div class="podium-stars">⭐ 3,100</div>
+        <div class="podium-block">3</div>
+      </div>
+    </div>
+
+    <div class="rating-list">
+      <div class="rating-item">
+        <div class="rank-num">4</div>
+        <div class="rank-avatar" style="background:#1a1a35">🦊</div>
+        <div class="rank-info">
+          <div class="rank-name">Bobur M.</div>
+          <div class="rank-tag">@bobur_m</div>
+        </div>
+        <div class="rank-stars">⭐ 2,800</div>
+      </div>
+      <div class="rating-item">
+        <div class="rank-num">5</div>
+        <div class="rank-avatar" style="background:#1a1a35">🐻</div>
+        <div class="rank-info">
+          <div class="rank-name">Zulfiya R.</div>
+          <div class="rank-tag">@zulfiya_r</div>
+        </div>
+        <div class="rank-stars">⭐ 2,150</div>
+      </div>
+      <div class="rating-item">
+        <div class="rank-num">6</div>
+        <div class="rank-avatar" style="background:#1a1a35">🦅</div>
+        <div class="rank-info">
+          <div class="rank-name">Jasur N.</div>
+          <div class="rank-tag">@jasur_n</div>
+        </div>
+        <div class="rank-stars">⭐ 1,920</div>
+      </div>
+      <div class="rating-item me">
+        <div class="rank-num" style="color:var(--gold)">7</div>
+        <div class="rank-avatar" style="background:#1a1a35">😊</div>
+        <div class="rank-info">
+          <div class="rank-name" id="my-rank-name">Siz</div>
+          <div class="rank-tag" style="color:var(--gold)">Sizning o'rningiz</div>
+        </div>
+        <div class="rank-stars">⭐ 250</div>
+      </div>
+      <div class="rating-item">
+        <div class="rank-num">8</div>
+        <div class="rank-avatar" style="background:#1a1a35">🐬</div>
+        <div class="rank-info">
+          <div class="rank-name">Nilufar S.</div>
+          <div class="rank-tag">@nilufar_s</div>
+        </div>
+        <div class="rank-stars">⭐ 190</div>
+      </div>
+      <div class="rating-item">
+        <div class="rank-num">9</div>
+        <div class="rank-avatar" style="background:#1a1a35">🦋</div>
+        <div class="rank-info">
+          <div class="rank-name">Kamol T.</div>
+          <div class="rank-tag">@kamol_t</div>
+        </div>
+        <div class="rank-stars">⭐ 120</div>
+      </div>
+      <div class="rating-item">
+        <div class="rank-num">10</div>
+        <div class="rank-avatar" style="background:#1a1a35">🐢</div>
+        <div class="rank-info">
+          <div class="rank-name">Shirin A.</div>
+          <div class="rank-tag">@shirin_a</div>
+        </div>
+        <div class="rank-stars">⭐ 80</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="page-profile" class="page">
+    <div class="sec-title">👤 Profil</div>
+    <div class="hero-card" style="text-align:left">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+        <div style="width:60px;height:60px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:30px">😊</div>
+        <div>
+          <div id="prof-name" style="font-size:18px;font-weight:800">Foydalanuvchi</div>
+          <div id="prof-user" style="font-size:13px;color:var(--sub)">@username</div>
+        </div>
+      </div>
+      <div class="stats-row" style="margin:0">
+        <div class="stat-card"><div class="stat-label">Starslar</div><div class="stat-val">250 ⭐</div></div>
+        <div class="stat-card"><div class="stat-label">Reyting</div><div class="stat-val" style="color:var(--green)">#7</div></div>
+      </div>
+
+      <div class="lang-box">
+        <div class="lang-title">🌐 Tilni tanlang / Выберите язык / Select Language</div>
+        <div class="lang-btns">
+          <button class="lang-btn active" id="lang-uz" onclick="changeLang('uz')">🇺🇿 O'zbekcha</button>
+          <button class="lang-btn" id="lang-ru" onclick="changeLang('ru')">🇷🇺 Русский</button>
+          <button class="lang-btn" id="lang-en" onclick="changeLang('en')">🇬🇧 English</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="autopay-badge" style="margin-top:16px">
+      <div class="autopay-icon">💳</div>
+      <div class="autopay-info">
+        <div class="autopay-title">Avto To'lov</div>
+        <div class="autopay-sub">Telegram Stars orqali avto to'lov faol</div>
+      </div>
+      <div class="autopay-toggle" onclick="showToast('Avto to\'lov sozlamasi o\'zgartirildi')"></div>
+    </div>
+
+    <div class="quick-actions" style="margin-top:4px">
+      <div class="qa-btn" onclick="showToast('📜 Tarix ochilmoqda...')">
+        <div class="qa-icon">📜</div>Tarix
+      </div>
+      <div class="qa-btn" onclick="openAdmin()">
+        <div class="qa-icon">🛡️</div>Admin Panel
+      </div>
+      <div class="qa-btn" onclick="showToast('🔔 Sozlamalar...')">
+        <div class="qa-icon">🔔</div>Bildirishnomalar
+      </div>
+      <div class="qa-btn" onclick="openSupport()">
+        <div class="qa-icon">📞</div>Yordam
+      </div>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <button class="nav-btn active" id="nav-home" onclick="goPage('home')">
+      <div class="icon">🏠</div>Bosh Sahifa
+    </button>
+    <button class="nav-btn" id="nav-stars" onclick="goPage('stars')">
+      <div class="icon">⭐</div>Stars
+    </button>
+    <button class="nav-btn" id="nav-gift" onclick="goPage('gift')">
+      <div class="icon">🎁</div>Gift
+    </button>
+    <button class="nav-btn" id="nav-top" onclick="goPage('top')">
+      <div class="icon">🏆</div>Top
+    </button>
+    <button class="nav-btn" id="nav-profile" onclick="goPage('profile')">
+      <div class="icon">👤</div>Profil
+    </button>
+  </nav>
+</div>
+
+<div id="admin-overlay">
+  <div class="admin-login">
+    <div class="admin-icon">🛡️</div>
+    <div class="admin-title">Admin Panel</div>
+    <div class="admin-sub">Kirish uchun 6 xonali kod kiriting</div>
+    <div class="code-dots" id="code-dots">
+      <div class="code-dot"></div>
+      <div class="code-dot"></div>
+      <div class="code-dot"></div>
+      <div class="code-dot"></div>
+      <div class="code-dot"></div>
+      <div class="code-dot"></div>
+    </div>
+    <div class="numpad">
+      <button class="num-btn" onclick="numPress(1)">1</button>
+      <button class="num-btn" onclick="numPress(2)">2</button>
+      <button class="num-btn" onclick="numPress(3)">3</button>
+      <button class="num-btn" onclick="numPress(4)">4</button>
+      <button class="num-btn" onclick="numPress(5)">5</button>
+      <button class="num-btn" onclick="numPress(6)">6</button>
+      <button class="num-btn" onclick="numPress(7)">7</button>
+      <button class="num-btn" onclick="numPress(8)">8</button>
+      <button class="num-btn" onclick="numPress(9)">9</button>
+      <button class="num-btn empty"></button>
+      <button class="num-btn" onclick="numPress(0)">0</button>
+      <button class="num-btn del" onclick="numDel()">⌫</button>
+    </div>
+    <div class="admin-error" id="admin-error">❌ Noto'g'ri kod! Qaytadan urinib ko'ring.</div>
+    <button onclick="closeAdmin()" style="width:100%;margin-top:16px;padding:12px;background:none;border:1px solid rgba(255,255,255,0.1);border-radius:14px;color:var(--sub);cursor:pointer;font-size:14px">Bekor qilish</button>
+  </div>
+</div>
+
+<div id="admin-panel">
+  <div class="admin-dash-header">
+    <div class="admin-dash-title">🛡️ Admin Panel</div>
+    <button class="admin-close" onclick="closeAdminPanel()">✕ Chiqish</button>
+  </div>
+
+  <div class="admin-stats">
+    <div class="adm-stat">
+      <div class="adm-stat-label">Jami Foydalanuvchilar</div>
+      <div class="adm-stat-val blue">1,247</div>
+    </div>
+    <div class="adm-stat">
+      <div class="adm-stat-label">Bugungi Savdo</div>
+      <div class="adm-stat-val gold">$342.50</div>
+    </div>
+    <div class="adm-stat">
+      <div class="adm-stat-label">Faol Premiumlar</div>
+      <div class="adm-stat-val purple">89</div>
+    </div>
+    <div class="adm-stat">
+      <div class="adm-stat-label">Stars Sotilgan</div>
+      <div class="adm-stat-val green">48,200</div>
+    </div>
+  </div>
+
+  <div class="admin-section">
+    <div class="admin-sec-title">⚙️ Mahsulot Narxlarini Tahrirlash</div>
+    <div class="admin-table" style="padding: 16px;">
+      <div class="admin-form-grid">
+        <div class="admin-form-group">
+          <label>50 Stars ($)</label>
+          <input type="number" step="0.01" id="inp-stars50" class="admin-input">
+        </div>
+        <div class="admin-form-group">
+          <label>100 Stars ($)</label>
+          <input type="number" step="0.01" id="inp-stars100" class="admin-input">
+        </div>
+        <div class="admin-form-group">
+          <label>250 Stars ($)</label>
+          <input type="number" step="0.01" id="inp-stars250" class="admin-input">
+        </div>
+        <div class="admin-form-group">
+          <label>500 Stars ($)</label>
+          <input type="number" step="0.01" id="inp-stars500" class="admin-input">
+        </div>
+        <div class="admin-form-group">
+          <label>1000 Stars ($)</label>
+          <input type="number" step="0.01" id="inp-stars1000" class="admin-input">
+        </div>
+        <div class="admin-form-group">
+          <label>2500 Stars ($)</label>
+          <input type="number" step="0.01" id="inp-stars2500" class="admin-input">
+        </div>
+        <div class="admin-form-group">
+          <label>Premium 1 Oy ($)</label>
+          <input type="number" step="0.01" id="inp-prem1" class="admin-input">
+        </div>
+        <div class="admin-form-group">
+          <label>Premium 3 Oy ($)</label>
+          <input type="number" step="0.01" id="inp-prem3" class="admin-input">
+        </div>
+        <div class="admin-form-group">
+          <label>Premium 6 Oy ($)</label>
+          <input type="number" step="0.01" id="inp-prem6" class="admin-input">
+        </div>
+        <div class="admin-form-group">
+          <label>Premium 1 Yil ($)</label>
+          <input type="number" step="0.01" id="inp-prem12" class="admin-input">
+        </div>
+        <div class="admin-form-group">
+          <label>Super Paket ($)</label>
+          <input type="number" step="0.01" id="inp-super" class="admin-input">
+        </div>
+        <div class="admin-form-group">
+          <label>VIP Paket ($)</label>
+          <input type="number" step="0.01" id="inp-vip" class="admin-input">
+        </div>
+      </div>
+      <button class="admin-save-btn" onclick="saveAdminPrices()">💾 Narxlarni Saqlash</button>
+    </div>
+  </div>
+
+  <div class="admin-section">
+    <div class="admin-sec-title">📋 So'nggi To'lovlar</div>
+    <div class="admin-table">
+      <div class="adm-row">
+        <div class="adm-ava" style="background:#1a1a35">🦁</div>
+        <div class="adm-info">
+          <div class="adm-name">Sardor T.</div>
+          <div class="adm-meta">500 Stars • 2 daqiqa oldin</div>
+        </div>
+        <div>
+          <div class="adm-amount">$4.99</div>
+          <div class="adm-status ok">✓ To'landi</div>
+        </div>
+      </div>
+      <div class="adm-row">
+        <div class="adm-ava" style="background:#1a1a35">🐺</div>
+        <div class="adm-info">
+          <div class="adm-name">Alex K.</div>
+          <div class="adm-meta">Premium 6 oy • 15 daqiqa oldin</div>
+        </div>
+        <div>
+          <div class="adm-amount">$29.99</div>
+          <div class="adm-status ok">✓ To'landi</div>
+        </div>
+      </div>
+      <div class="adm-row">
+        <div class="adm-ava" style="background:#1a1a35">🐯</div>
+        <div class="adm-info">
+          <div class="adm-name">Malika U.</div>
+          <div class="adm-meta">1000 Stars • 1 soat oldin</div>
+        </div>
+        <div>
+          <div class="adm-amount">$9.99</div>
+          <div class="adm-status pend">⏳ Jarayonda</div>
+        </div>
+      </div>
+      <div class="adm-row">
+        <div class="adm-ava" style="background:#1a1a35">🦊</div>
+        <div class="adm-info">
+          <div class="adm-name">Bobur M.</div>
+          <div class="adm-meta">VIP Sovga • 2 soat oldin</div>
+        </div>
+        <div>
+          <div class="adm-amount">$24.99</div>
+          <div class="adm-status ok">✓ To'landi</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-section">
+    <div class="admin-sec-title">⚙️ Admin Amallar</div>
+  </div>
+  <div class="admin-action-btns">
+    <div class="adm-action" onclick="showToast('📢 Xabar yuborildi!')">
+      <div class="icon">📢</div>Xabar Yuborish
+    </div>
+    <div class="adm-action" onclick="showToast('👥 Foydalanuvchilar ro\'yxati...')">
+      <div class="icon">👥</div>Foydalanuvchilar
+    </div>
+    <div class="adm-action" onclick="showToast('📊 Statistika yuklanmoqda...')">
+      <div class="icon">📊</div>Statistika
+    </div>
+    <div class="adm-action" onclick="showToast('💰 To\'lovlar ro\'yxati...')">
+      <div class="icon">💰</div>To'lovlar
+    </div>
+    <div class="adm-action" onclick="showToast('⚙️ Sozlamalar...')">
+      <div class="icon">⚙️</div>Sozlamalar
+    </div>
+    <div class="adm-action" onclick="showToast('📦 Mahsulotlar...')">
+      <div class="icon">📦</div>Mahsulotlar
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="buy-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div style="font-size:48px;text-align:center;margin-bottom:12px" id="modal-emoji">⭐</div>
+    <div class="modal-title" id="modal-title">Sotib Olish</div>
+    <div class="modal-desc" id="modal-desc">Tasdiqlaysizmi?</div>
+    
+    <input type="text" id="target-username" placeholder="Telegram @username kiriting" class="modal-input">
+    
+    <button class="modal-confirm" onclick="confirmBuy()">✅ Avto To'lov bilan Tasdiqlash</button>
+    <button class="modal-cancel" onclick="closeModal()">Bekor qilish</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const ADMIN_CODE = "200901";  // Belgilangan PIN-kod
+
+// Sukut bo'yicha mahsulot narxlari
+let prices = {
+  stars50: 0.50,
+  stars100: 0.99,
+  stars250: 2.49,
+  stars500: 4.99,
+  stars1000: 9.99,
+  stars2500: 22.99,
+  prem1: 5.99,
+  prem3: 15.99,
+  prem6: 29.99,
+  prem12: 54.99,
+  super_pack: 9.99,
+  vip_pack: 24.99
+};
+
+function updatePriceDOMElements() {
+  document.getElementById('p-stars50').textContent = `$${prices.stars50}`;
+  document.getElementById('p-stars100').textContent = `$${prices.stars100}`;
+  document.getElementById('p-stars250').textContent = `$${prices.prices || prices.stars250}`;
+  document.getElementById('p-stars250').textContent = `$${prices.stars250}`;
+  document.getElementById('p-stars500').textContent = `$${prices.stars500}`;
+  document.getElementById('p-stars1000').textContent = `$${prices.stars1000}`;
+  document.getElementById('p-stars2500').textContent = `$${prices.stars2500}`;
+  
+  document.getElementById('p-gift50').textContent = `$${prices.stars50}`;
+  document.getElementById('p-gift100').textContent = `$${prices.stars100}`;
+  document.getElementById('p-giftPrem1').textContent = `$${prices.prem1}`;
+  document.getElementById('p-giftPrem3').textContent = `$${prices.prem3}`;
+  document.getElementById('p-giftSuper').textContent = `$${prices.super_pack}`;
+  document.getElementById('p-giftVip').textContent = `$${prices.vip_pack}`;
+
+  document.getElementById('p-prem1').textContent = `$${prices.prem1}`;
+  document.getElementById('p-prem6').textContent = `$${prices.prem6}`;
+  document.getElementById('p-prem12').textContent = `$${prices.prem12}`;
+}
+
+// Telegram Web App init
+let tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand();
+  tg.setHeaderColor('#0a0a1a');
+  tg.setBackgroundColor('#0a0a1a');
+}
+
+let userName = "Do'st";
+let userHandle = "@user";
+
+function initUser() {
+  if (tg?.initDataUnsafe?.user) {
+    const u = tg.initDataUnsafe.user;
+    userName = u.first_name + (u.last_name ? ' ' + u.last_name : '');
+    userHandle = u.username ? '@' + u.username : '#' + u.id;
+  }
+  document.getElementById('welcome-name').textContent = `Salom, ${userName}! 👋`;
+  document.getElementById('prof-name').textContent = userName;
+  document.getElementById('prof-user').textContent = userHandle;
+  document.getElementById('my-rank-name').textContent = userName;
+}
+
+// ── OVOZ EFFEKTI (Web Audio API) ──
+function playClickSound() {
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(580, audioCtx.currentTime);
+    gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+    
+    oscillator.start(audioCtx.currentTime);
+    oscillator.stop(audioCtx.currentTime + 0.08);
+  } catch (e) {
+    console.log("Audio xatolik:", e);
+  }
+}
+
+document.addEventListener('click', function(e) {
+  const target = e.target;
+  if (target.closest('button, .nav-btn, .star-pack, .gift-card, .prem-plan, .qa-btn, .num-btn, .autopay-toggle, .adm-action, .admin-close, .lang-btn')) {
+    playClickSound();
+  }
+});
+
+// Splash → Welcome
+window.addEventListener('load', () => {
+  initUser();
+  updatePriceDOMElements();
+  setTimeout(() => {
+    document.getElementById('splash').style.display = 'none';
+    document.getElementById('welcome').style.display = 'flex';
+  }, 2200);
+});
+
+function enterApp() {
+  document.getElementById('welcome').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+}
+
+// Navigation
+function goPage(p) {
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-' + p).classList.add('active');
+  document.getElementById('nav-' + p).classList.add('active');
+}
+
+// Gift tab switch
+function switchGiftTab(tab) {
+  document.getElementById('gift-section').style.display = tab === 'gift' ? 'block' : 'none';
+  document.getElementById('premium-section').style.display = tab === 'premium' ? 'block' : 'none';
+  document.getElementById('tab-gift').classList.toggle('active', tab === 'gift');
+  document.getElementById('tab-premium').classList.toggle('active', tab === 'premium');
+}
+
+// Language Switcher Function
+function changeLang(lang) {
+  document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+  document.getElementById('lang-' + lang).classList.add('active');
+  showToast(lang === 'uz' ? 'Til o\'zgartirildi: O\'zbekcha' : lang === 'ru' ? 'Язык изменен: Русский' : 'Language changed: English');
+}
+
+// Purchase flow
+let pendingBuy = null;
+
+function buyStars(count, price) {
+  pendingBuy = { type: 'stars', count, price };
+  document.getElementById('modal-emoji').textContent = '⭐';
+  document.getElementById('modal-title').textContent = `${count} Stars Sotib Olish`;
+  document.getElementById('modal-desc').textContent = `💳 Avto To'lov orqali $${price} to'lanadi.\n⭐ ${count} Stars kiritilgan foydalanuvchi hisobiga qo'shiladi.`;
+  document.getElementById('target-username').value = '';
+  document.getElementById('buy-modal').classList.add('show');
+}
+
+function openGift(name, desc, priceKey) {
+  let currentPrice = prices[priceKey] || 0;
+  if(priceKey === 'stars50_gift') currentPrice = prices.stars50;
+  if(priceKey === 'stars100_gift') currentPrice = prices.stars100;
+  
+  pendingBuy = { type: 'gift', name, price: currentPrice };
+  const emojis = { 'Sovga':'🎁', 'Premium':'💎', 'VIP':'👑', 'Super':'🎀', 'Yulduz':'⭐', 'Katta':'🌟' };
+  let em = '🎁';
+  for (let k in emojis) if (name.includes(k)) { em = emojis[k]; break; }
+  
+  document.getElementById('modal-emoji').textContent = em;
+  document.getElementById('modal-title').textContent = name;
+  document.getElementById('modal-desc').textContent = desc + `\n\n💰 Narx: $${currentPrice}\n💳 Avto To'lov bilan amalga oshiriladi.`;
+  document.getElementById('target-username').value = '';
+  document.getElementById('buy-modal').classList.add('show');
+}
+
+function confirmBuy() {
+  const usernameVal = document.getElementById('target-username').value.trim();
+  if(!usernameVal) {
+    showToast('❌ Iltimos, Telegram username kiriting!');
+    return;
+  }
+  
+  closeModal();
+  showToast(`✅ To'lov muvaffaqiyatli! @${usernameVal.replace('@','')} profiliga jo'natiladi.`);
+  
+  if (pendingBuy?.type === 'stars') {
+    let cur = parseInt(document.getElementById('balance-display').textContent.replace('⭐ ', ''));
+    cur += pendingBuy.count;
+    document.getElementById('balance-display').textContent = '⭐ ' + cur;
+    document.getElementById('stat-stars').textContent = cur + ' ⭐';
+  }
+}
+
+function closeModal() {
+  document.getElementById('buy-modal').classList.remove('show');
+}
+
+// ── TELEGRAM LICHKAGA O'TISH (YORDAM TUGMASI) ──
+function openSupport() {
+  const supportUrl = 'https://t.me/zafarv1ch';
+  if (tg && typeof tg.openTelegramLink === 'function') {
+    tg.openTelegramLink(supportUrl);
+  } else {
+    window.open(supportUrl, '_blank');
+  }
+}
+
+// Admin PIN
+let adminCode = '';
+
+function openAdmin() {
+  adminCode = '';
+  updateDots();
+  document.getElementById('admin-error').style.display = 'none';
+  document.getElementById('admin-overlay').classList.add('show');
+}
+
+function closeAdmin() {
+  document.getElementById('admin-overlay').classList.remove('show');
+  adminCode = '';
+  updateDots();
+}
+
+function numPress(n) {
+  if (adminCode.length >= 6) return;
+  adminCode += n;
+  updateDots();
+  if (adminCode.length === 6) checkCode();
+}
+
+function numDel() {
+  adminCode = adminCode.slice(0, -1);
+  updateDots();
+  document.getElementById('admin-error').style.display = 'none';
+}
+
+function updateDots() {
+  document.querySelectorAll('.code-dot').forEach((d, i) => {
+    d.classList.toggle('filled', i < adminCode.length);
+  });
+}
+
+function checkCode() {
+  setTimeout(() => {
+    if (adminCode === ADMIN_CODE) {
+      closeAdmin();
+      // Inputlarni joriy narxlar bilan to'ldirish
+      document.getElementById('inp-stars50').value = prices.stars50;
+      document.getElementById('inp-stars100').value = prices.stars100;
+      document.getElementById('inp-stars250').value = prices.stars250;
+      document.getElementById('inp-stars500').value = prices.stars500;
+      document.getElementById('inp-stars1000').value = prices.stars1000;
+      document.getElementById('inp-stars2500').value = prices.stars2500;
+      document.getElementById('inp-prem1').value = prices.prem1;
+      document.getElementById('inp-prem3').value = prices.prem3;
+      document.getElementById('inp-prem6').value = prices.prem6;
+      document.getElementById('inp-prem12').value = prices.prem12;
+      document.getElementById('inp-super').value = prices.super_pack;
+      document.getElementById('inp-vip').value = prices.vip_pack;
+      
+      document.getElementById('admin-panel').classList.add('show');
+    } else {
+      document.getElementById('admin-error').style.display = 'block';
+      document.querySelectorAll('.code-dot').forEach(d => {
+        d.style.borderColor = 'var(--red)';
+        d.style.background = 'rgba(239,68,68,0.3)';
+      });
+      setTimeout(() => {
+        adminCode = '';
+        updateDots();
+        document.querySelectorAll('.code-dot').forEach(d => {
+          d.style.borderColor = '';
+          d.style.background = '';
+        });
+      }, 900);
+    }
+  }, 200);
+}
+
+function saveAdminPrices() {
+  prices.stars50 = parseFloat(document.getElementById('inp-stars50').value) || 0;
+  prices.stars100 = parseFloat(document.getElementById('inp-stars100').value) || 0;
+  prices.stars250 = parseFloat(document.getElementById('inp-stars250').value) || 0;
+  prices.stars500 = parseFloat(document.getElementById('inp-stars500').value) || 0;
+  prices.stars1000 = parseFloat(document.getElementById('inp-stars1000').value) || 0;
+  prices.stars2500 = parseFloat(document.getElementById('inp-stars2500').value) || 0;
+  prices.prem1 = parseFloat(document.getElementById('inp-prem1').value) || 0;
+  prices.prem3 = parseFloat(document.getElementById('inp-prem3').value) || 0;
+  prices.prem6 = parseFloat(document.getElementById('inp-prem6').value) || 0;
+  prices.prem12 = parseFloat(document.getElementById('inp-prem12').value) || 0;
+  prices.super_pack = parseFloat(document.getElementById('inp-super').value) || 0;
+  prices.vip_pack = parseFloat(document.getElementById('inp-vip').value) || 0;
+  
+  updatePriceDOMElements();
+  showToast('💾 Barcha narxlar muvaffaqiyatli yangilandi!');
+}
+
+function closeAdminPanel() {
+  document.getElementById('admin-panel').classList.remove('show');
+}
+
+// Toast
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Close modal on backdrop click
+document.getElementById('buy-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+</script>
+</body>
+</html>
